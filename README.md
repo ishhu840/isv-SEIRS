@@ -182,6 +182,10 @@ The full aquatic dynamics combine egg-laying, recruitment to adults, mortality, 
 
 CFAV spreads inside the mosquito population through three biological routes, measured experimentally in *Ae. aegypti* by **Logan et al. 2022**:
 
+![CFAV transmission routes](./02_Figures/final.png)
+
+*Figure. The three vertical transmission routes of CFAV in* Aedes aegypti. *An infected male (left) passes the virus to a wild female (right) and her offspring through three biological routes: maternal (93 %, infected female → her own eggs), paternal (76 %, infected male → offspring via sperm), and venereal (31 %, infected male → female body via mating). Values from Logan et al. 2022 [7].*
+
 | Route | Symbol | Rate | What it means in plain English |
 |---|---|---|---|
 | Maternal | ν_M | **0.93** | An infected female lays eggs; 93 % of her offspring inherit CFAV through the egg. |
