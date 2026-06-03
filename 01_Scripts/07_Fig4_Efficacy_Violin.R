@@ -128,7 +128,7 @@ K0 <- 1e6; k_R_mosq <- 0.02; M0_F <- 20000; I0W_f <- 0.001
 N_rel_M <- 25000L # Male-only Release
 TIMINGS <- c(March=10L, April=14L, May=18L, June=23L, July=27L, August=31L)
 YEARS <- 2013:2024
-set.seed(20260521); N_MC <- 500   # reduced from 2000 for coupled-engine compute cost
+set.seed(20260521); N_MC <- 2000
 # Combined blocking-efficacy uncertainty: Beta(2,2) scaled to [0.05, 0.95]
 # Beta(2,2) is symmetric and bell-shaped — no bias toward success or failure.
 # Range [0.05, 0.95] spans worst-case field failure to near-perfect establishment.
@@ -147,35 +147,43 @@ if (file.exists(res_file)) {
   df4 <- read.csv(res_file)
   df4$Timing <- factor(df4$Timing, levels=c("March", "April", "May", "June", "July", "August"))
 } else {
-  cat("=== No cache found. Running 2000-iteration Monte Carlo simulation... ===\n")
-  mc_all <- list()
-  for (yr in YEARS) {
-    mask_yr <- df_all$Year==yr; idx_yr <- which(mask_yr)
+  N_CORES <- max(1, parallel::detectCores() - 2)
+  cat(sprintf("=== No cache found. Running %d-iteration Monte Carlo (parallel, %d cores) ===\n",
+              N_MC, N_CORES))
+  cells <- expand.grid(yr = YEARS, nm = names(TIMINGS), stringsAsFactors = FALSE)
+  t0 <- Sys.time()
+  cell_results <- parallel::mclapply(seq_len(nrow(cells)), function(k) {
+    yr <- cells$yr[k]
+    nm <- cells$nm[k]
+    rw <- TIMINGS[nm]
+    mask_yr <- df_all$Year == yr
+    idx_yr <- which(mask_yr)
     T_yr <- df_raw$Temperature[mask_yr]
-    R_lag<- c(rep(NA,5), df_raw$Rainfall[mask_yr][1:47])
-    pred_base_yr <- sum(df_all$pred_baseline[mask_yr], na.rm=TRUE)
-    for (nm in names(TIMINGS)) {
-      rw <- TIMINGS[nm]
-      mosq <- simulate_mosquitoes(T_yr, R_lag, K0, k_R_mosq, rel_week=rw, N_rel_F=0L, N_rel_M=N_rel_M, M0_F=M0_F, I0W_f=I0W_f)
-      p_ISV_yr <- mosq$p_ISV
-      # Build p_ISV_full: length-N (entire 12yr panel) so coupled engine sees ISV
-      # only during the chosen year.
-      p_ISV_full <- rep(0, nrow(df_all))
-      for(w in 1:52) if(!is.na(p_ISV_yr[w])) p_ISV_full[idx_yr[w]] <- p_ISV_yr[w]
-      mc_reds <- vapply(seq_len(N_MC), function(i) {
-        sim_isv <- run_coupled(p_local, df_all, RL, TL,
-                               p_ISV_vec = p_ISV_full, eps = eps_mc[i])
-        pp <- sim_isv$pred
-        if (pred_base_yr > 0) { 100*(pred_base_yr - sum(pp[mask_yr], na.rm=T)) / pred_base_yr } else { 0 }
-      }, numeric(1))
-      mc_all[[length(mc_all)+1]] <- data.frame(Timing=nm, Year=yr, Reduction=mc_reds, stringsAsFactors=FALSE)
-    }
-  }
-  df4 <- bind_rows(mc_all)
-  dir.create("../03_Results", showWarnings=FALSE)
-  write.csv(df4, res_file, row.names=FALSE)
-  cat("=== Saved Monte Carlo results to", res_file, "===\n")
-  df4$Timing <- factor(df4$Timing, levels=c("March", "April", "May", "June", "July", "August"))
+    R_lag <- c(rep(NA, 5), df_raw$Rainfall[mask_yr][1:47])
+    pred_base_yr <- sum(df_all$pred_baseline[mask_yr], na.rm = TRUE)
+    mosq <- simulate_mosquitoes(T_yr, R_lag, K0, k_R_mosq, rel_week = rw,
+                                N_rel_F = 0L, N_rel_M = N_rel_M,
+                                M0_F = M0_F, I0W_f = I0W_f)
+    p_ISV_yr <- mosq$p_ISV
+    p_ISV_full <- rep(0, nrow(df_all))
+    for (w in 1:52) if (!is.na(p_ISV_yr[w])) p_ISV_full[idx_yr[w]] <- p_ISV_yr[w]
+    mc_reds <- vapply(seq_len(N_MC), function(i) {
+      sim_isv <- run_coupled(p_local, df_all, RL, TL,
+                             p_ISV_vec = p_ISV_full, eps = eps_mc[i])
+      pp <- sim_isv$pred
+      if (pred_base_yr > 0) {
+        100 * (pred_base_yr - sum(pp[mask_yr], na.rm = TRUE)) / pred_base_yr
+      } else 0
+    }, numeric(1))
+    data.frame(Timing = nm, Year = yr, Reduction = mc_reds, stringsAsFactors = FALSE)
+  }, mc.cores = N_CORES, mc.preschedule = TRUE)
+  df4 <- bind_rows(cell_results)
+  dir.create("../03_Results", showWarnings = FALSE)
+  write.csv(df4, res_file, row.names = FALSE)
+  t1 <- Sys.time()
+  cat(sprintf("=== Saved %d rows to %s in %.1f min ===\n",
+              nrow(df4), res_file, as.numeric(t1 - t0, units = "mins")))
+  df4$Timing <- factor(df4$Timing, levels = c("March", "April", "May", "June", "July", "August"))
 }
 
 # Summarize precisely as the old script did
@@ -251,7 +259,7 @@ p4 <- ggplot(df4 %>% filter(Year != 2013), aes(x = Timing, y = Reduction, fill =
                      expand = expansion(mult = c(0, 0))) +
   labs(
     title    = sprintf("Early Release is Critical: March Reduces Cases by %s", df4s$Lbl_Top[df4s$Timing == "March"]),
-    subtitle = "Monte Carlo uncertainty | 2013-2024 Weather Data | N = 24,000 | Parameters: \u03b5\u2009\u223c\u2009U(0.65, 0.95) | Box\u2009=\u2009IQR",
+    subtitle = "Monte Carlo uncertainty | 2013-2024 Weather Data | N = 2000 per timing | \u03b5\u2009\u223c\u2009Beta(2,2) on [0.05, 0.95] | Box\u2009=\u2009IQR",
     x = "ISV Release Timing",
     y = "Annual Case Reduction (%)",
     caption = "Pre-monsoon (March) male-only release provides robust >90% reduction across normal climate years."
