@@ -74,10 +74,13 @@ run_coupled <- function(p_seir, df_all, rain_lag, temp_lag,
   # Mosquito compartments (per year, reset each year)
   S_W_save <- E_W_save <- I_W_save <- numeric(T_len)
 
-  # Carrying-capacity rainfall lag for mosquito side (5w following Mukhtar 2011)
+  # Carrying-capacity rainfall lag for mosquito side.
+  # Uses the same `rain_lag` (optimal lag from the grid search on Rawalpindi
+  # data) as the human transmission force, so both sides of the coupled
+  # engine respond to the same biological time scale.
   rain_raw <- df_all$Rainfall
   if (is.null(rain_raw)) rain_raw <- rep(0, T_len)
-  R_for_mosq <- c(rep(NA, 5), rain_raw[1:(T_len - 5)])
+  R_for_mosq <- c(rep(NA, rain_lag), rain_raw[1:(T_len - rain_lag)])
   R_for_mosq[is.na(R_for_mosq)] <- 0
 
   # Initialise wild mosquito state (overwintering)

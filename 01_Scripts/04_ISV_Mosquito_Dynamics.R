@@ -176,7 +176,7 @@ if (interactive() || sys.nframe() == 0) {
 
   T23 <- df_raw$Temperature[df_raw$Year==2023]
   R23 <- df_raw$Rainfall[df_raw$Year==2023]
-  R23_lag <- c(rep(NA,5), R23[1:(52-5)])
+  R23_lag <- c(rep(NA, 7), R23[1:(52 - 7)])   # 7w optimal lag from Rawalpindi grid search
 
   sim <- simulate_mosquitoes(
     T_vec = T23, R_vec = R23_lag,

@@ -189,7 +189,7 @@ for (i in seq_len(N_LHS)) {
     mask_yr <- df_all$Year == yr
     idx_yr <- which(mask_yr)
     T_yr <- df_raw$Temperature[mask_yr]
-    R_lag <- c(rep(NA,5), df_raw$Rainfall[mask_yr][1:47])
+    R_lag <- c(rep(NA, RL), df_raw$Rainfall[mask_yr][1:(52 - RL)])
     pred_base_yr <- sum(df_all$pred_baseline[mask_yr], na.rm=TRUE)
 
     p_ISV_yr <- sim_mosq_param(

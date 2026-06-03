@@ -159,7 +159,7 @@ if (file.exists(res_file)) {
     mask_yr <- df_all$Year == yr
     idx_yr <- which(mask_yr)
     T_yr <- df_raw$Temperature[mask_yr]
-    R_lag <- c(rep(NA, 5), df_raw$Rainfall[mask_yr][1:47])
+    R_lag <- c(rep(NA, RL), df_raw$Rainfall[mask_yr][1:(52 - RL)])
     pred_base_yr <- sum(df_all$pred_baseline[mask_yr], na.rm = TRUE)
     mosq <- simulate_mosquitoes(T_yr, R_lag, K0, k_R_mosq, rel_week = rw,
                                 N_rel_F = 0L, N_rel_M = N_rel_M,
