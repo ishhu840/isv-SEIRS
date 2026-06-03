@@ -106,7 +106,9 @@ draw_arrow(x_A + BW/2, yA, x_NMW - BW/2, yA, label=r'$G$', lv=0.4)
 draw_arrow(x_NMW + BW/2, yA, x_NMI - BW/2, yA, lw=3, label=r'Release', lv=0.4)
 
 # Vector Females Progression
-draw_arrow(x_SW + BW/2, yV, x_EW - BW/2, yV, label=r'$PDR(T)$', lv=0.4)
+# S_W -> E_W: human-to-mosquito force of infection (Ross-Macdonald), NOT PDR.
+# E_W -> I_W: extrinsic incubation period completion, governed by PDR(T).
+draw_arrow(x_SW + BW/2, yV, x_EW - BW/2, yV, label=r'$\lambda_V$', lv=0.4)
 draw_arrow(x_EW + BW/2, yV, x_IW - BW/2, yV, label=r'$PDR(T)$', lv=0.4)
 
 # Human Progression (Right to Left!)
