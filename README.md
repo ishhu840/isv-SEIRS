@@ -590,7 +590,7 @@ If you use any part of this work, please cite:
 
 > Hussain, I. and Odon, V. (2026). *Weather-Driven SEIRS-ISV Modelling for Dengue Control in Pakistan: A Rawalpindi Case Study.* University of Strathclyde, Glasgow.
 
-**Contact:** Ishtiaq Hussain — *ishtiaqhussain910@gmail.com*
+**Contact:** Ishtiaq Hussain — *ishtiaq.hussain@strath.ac.uk*
 Strathclyde Institute of Pharmacy & Biomedical Sciences (SIPBS), Hamnett Wing, 161 Cathedral Street, Glasgow, G4 0RE, UK.
 
 ---
